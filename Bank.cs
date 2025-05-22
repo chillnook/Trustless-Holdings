@@ -35,7 +35,7 @@ namespace TrustlessHoldingsInc
                 return true;
             }
 
-            return false; // Not enough balance
+            return false;
         }
     }
 }

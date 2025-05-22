@@ -16,72 +16,68 @@ namespace TrustlessHoldingsInc
 
         public Main()
         {
-            _bank = new Bank(1000); // Initialize with a starting bank balance of 1000
-            _uiManager = new UIManager(_bank, 500); // Initialize with a starting cash balance of 500
+            _bank = new Bank(1000);
+            _uiManager = new UIManager(_bank, 500);
 
-            decimal cash = 0; // Temporary variable to load cash balance
-            BankDataManager.LoadBankData(_bank, ref cash); // Load saved bank and cash data
-            _uiManager = new UIManager(_bank, cash); // Initialize UIManager with loaded cash balance
+            decimal cash = 0;
+            BankDataManager.LoadBankData(_bank, ref cash);
+            _uiManager = new UIManager(_bank, cash);
 
-            // Initialize the EconomyAPI
-            EconomyAPI.Instance.Initialize(_uiManager);
+            EconomyAPI.Instance.Initialize(_bank.GetBalance(), cash);
 
             Tick += OnTick;
             KeyDown += OnKeyDown;
-            Aborted += OnAborted; // Save data when the script is stopped
+            Aborted += OnAborted; 
         }
 
         private void OnTick(object sender, EventArgs e)
         {
-            // Always hide the default in-game cash value
             Function.Call(Hash.DISPLAY_CASH, false);
 
-            // Hide the ammo count in the top-right corner only when the custom UI is visible
             if (_uiManager.IsUIVisible())
             {
                 Function.Call(Hash.DISPLAY_AMMO_THIS_FRAME, false);
             }
 
-            // Draw the custom UI on every tick
             _uiManager.DrawUI();
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Insert && e.Modifiers == Keys.Shift) // Add money to cash (SHIFT + INSERT)
+            if (e.KeyCode == Keys.Insert && e.Modifiers == Keys.Shift)
             {
                 _uiManager.AddCash(500);
             }
-            else if (e.KeyCode == Keys.Delete && e.Modifiers == Keys.Shift) // Remove money from cash (SHIFT + DELETE)
+            else if (e.KeyCode == Keys.Delete && e.Modifiers == Keys.Shift) 
             {
                 if (!_uiManager.RemoveCash(200))
                 {
                     Screen.ShowSubtitle("Not enough cash.");
                 }
             }
-            else if (e.KeyCode == Keys.Insert) // Add money to the bank
+            else if (e.KeyCode == Keys.Insert) 
             {
                 _uiManager.AddBank(500);
             }
-            else if (e.KeyCode == Keys.Delete) // Remove money from the bank
+            else if (e.KeyCode == Keys.Delete)
             {
                 if (!_uiManager.RemoveBank(200))
                 {
                     Screen.ShowSubtitle("Not enough balance in the bank.");
                 }
             }
-            else if (e.KeyCode == Keys.Multiply) // Add cash
+            else if (e.KeyCode == Keys.Multiply)
             {
                 _uiManager.AddCash(100);
             }
-            else if (e.KeyCode == Keys.Divide) // Remove cash
+            else if (e.KeyCode == Keys.Divide)
             {
                 if (!_uiManager.RemoveCash(50))
                 {
                     Screen.ShowSubtitle("Not enough cash.");
                 }
             }
-            else if (e.KeyCode == Keys.Z) // Show both bank and cash texts
+            else if (e.KeyCode == Keys.Z)
             {
                 _uiManager.ShowBothTexts();
             }
@@ -89,7 +85,6 @@ namespace TrustlessHoldingsInc
 
         private void OnAborted(object sender, EventArgs e)
         {
-            // Save bank and cash data when the script is stopped
             BankDataManager.SaveBankData(_bank, _uiManager.GetCash());
         }
     }

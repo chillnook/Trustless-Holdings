@@ -45,8 +45,8 @@ namespace TrustlessHoldingsInc
                     {
                         var serializer = new XmlSerializer(typeof(BankData));
                         var data = (BankData)serializer.Deserialize(reader);
-                        bank.AddMoney(data.BankBalance - bank.GetBalance()); // Adjust bank balance
-                        cash = data.CashBalance; // Load cash balance
+                        bank.AddMoney(data.BankBalance - bank.GetBalance()); 
+                        cash = data.CashBalance;
                     }
                 }
             }
@@ -59,8 +59,8 @@ namespace TrustlessHoldingsInc
         [Serializable]
         public class BankData
         {
-            public decimal BankBalance { get; set; } // Bank balance
-            public decimal CashBalance { get; set; } // Cash balance
+            public decimal BankBalance { get; set; }
+            public decimal CashBalance { get; set; }
         }
     }
 }

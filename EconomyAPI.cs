@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 namespace TrustlessHoldingsInc
 {
     /// <summary>
-    /// Provides an API for interacting with the economy system, including bank and cash balances.
+    /// Provides an API for managing the economy system, including bank and cash balances.
     /// </summary>
     public class EconomyAPI
     {
         private static EconomyAPI _instance;
-        private UIManager _uiManager;
+
+        private decimal _bankBalance;
+        private decimal _cashBalance;
 
         // Events for bank-related actions
         /// <summary>
@@ -46,12 +48,6 @@ namespace TrustlessHoldingsInc
         /// </summary>
         public event Action<decimal> OnCashMoneyRemoved;
 
-        // Event for UI visibility
-        /// <summary>
-        /// Triggered when the custom UI is shown.
-        /// </summary>
-        public event Action OnUIShown;
-
         /// <summary>
         /// Singleton instance of the EconomyAPI.
         /// </summary>
@@ -67,16 +63,26 @@ namespace TrustlessHoldingsInc
             }
         }
 
-        private EconomyAPI() { }
+        private EconomyAPI()
+        {
+            // Initialize balances (default values can be adjusted as needed)
+            _bankBalance = 0;
+            _cashBalance = 0;
+        }
 
         /// <summary>
-        /// Initializes the API with the provided UIManager instance.
+        /// Sets the initial balances for the bank and cash accounts.
         /// </summary>
-        /// <param name="uiManager">The UIManager instance to use for the economy system.</param>
-        /// <exception cref="ArgumentNullException">Thrown if the UIManager is null.</exception>
-        public void Initialize(UIManager uiManager)
+        /// <param name="bankBalance">The initial bank balance.</param>
+        /// <param name="cashBalance">The initial cash balance.</param>
+        public void Initialize(decimal bankBalance, decimal cashBalance)
         {
-            _uiManager = uiManager ?? throw new ArgumentNullException(nameof(uiManager));
+            _bankBalance = bankBalance;
+            _cashBalance = cashBalance;
+
+            // Trigger initial balance events
+            OnBankBalanceChanged?.Invoke(_bankBalance);
+            OnCashBalanceChanged?.Invoke(_cashBalance);
         }
 
         /// <summary>
@@ -85,9 +91,12 @@ namespace TrustlessHoldingsInc
         /// <param name="amount">The amount of money to add.</param>
         public void AddToBank(decimal amount)
         {
-            _uiManager.AddBank(amount);
+            if (amount < 0)
+                throw new ArgumentException("Amount to add cannot be negative.");
+
+            _bankBalance += amount;
             OnBankMoneyAdded?.Invoke(amount);
-            OnBankBalanceChanged?.Invoke(_uiManager.GetBankBalance());
+            OnBankBalanceChanged?.Invoke(_bankBalance);
         }
 
         /// <summary>
@@ -97,13 +106,18 @@ namespace TrustlessHoldingsInc
         /// <returns>True if the money was successfully removed; otherwise, false.</returns>
         public bool RemoveFromBank(decimal amount)
         {
-            bool success = _uiManager.RemoveBank(amount);
-            if (success)
+            if (amount < 0)
+                throw new ArgumentException("Amount to remove cannot be negative.");
+
+            if (_bankBalance >= amount)
             {
+                _bankBalance -= amount;
                 OnBankMoneyRemoved?.Invoke(amount);
-                OnBankBalanceChanged?.Invoke(_uiManager.GetBankBalance());
+                OnBankBalanceChanged?.Invoke(_bankBalance);
+                return true;
             }
-            return success;
+
+            return false; // Not enough balance
         }
 
         /// <summary>
@@ -112,9 +126,12 @@ namespace TrustlessHoldingsInc
         /// <param name="amount">The amount of money to add.</param>
         public void AddToCash(decimal amount)
         {
-            _uiManager.AddCash(amount);
+            if (amount < 0)
+                throw new ArgumentException("Amount to add cannot be negative.");
+
+            _cashBalance += amount;
             OnCashMoneyAdded?.Invoke(amount);
-            OnCashBalanceChanged?.Invoke(_uiManager.GetCash());
+            OnCashBalanceChanged?.Invoke(_cashBalance);
         }
 
         /// <summary>
@@ -124,13 +141,18 @@ namespace TrustlessHoldingsInc
         /// <returns>True if the money was successfully removed; otherwise, false.</returns>
         public bool RemoveFromCash(decimal amount)
         {
-            bool success = _uiManager.RemoveCash(amount);
-            if (success)
+            if (amount < 0)
+                throw new ArgumentException("Amount to remove cannot be negative.");
+
+            if (_cashBalance >= amount)
             {
+                _cashBalance -= amount;
                 OnCashMoneyRemoved?.Invoke(amount);
-                OnCashBalanceChanged?.Invoke(_uiManager.GetCash());
+                OnCashBalanceChanged?.Invoke(_cashBalance);
+                return true;
             }
-            return success;
+
+            return false; // Not enough cash
         }
 
         /// <summary>
@@ -139,7 +161,7 @@ namespace TrustlessHoldingsInc
         /// <returns>The current bank balance.</returns>
         public decimal GetBankBalance()
         {
-            return _uiManager.GetBankBalance();
+            return _bankBalance;
         }
 
         /// <summary>
@@ -148,16 +170,7 @@ namespace TrustlessHoldingsInc
         /// <returns>The current cash balance.</returns>
         public decimal GetCashBalance()
         {
-            return _uiManager.GetCash();
-        }
-
-        /// <summary>
-        /// Shows the custom UI for the economy system.
-        /// </summary>
-        public void ShowUI()
-        {
-            _uiManager.ShowBothTexts();
-            OnUIShown?.Invoke();
+            return _cashBalance;
         }
     }
 }
